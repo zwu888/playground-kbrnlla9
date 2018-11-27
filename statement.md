@@ -1,19 +1,40 @@
-# Welcome!
-
-This C++ template lets you get started quickly with a simple one-page playground.
-
+# Use std::lock() or std::scoped_lock to acquire multiple mutexes
 ```C++ runnable
 #include <iostream>
+#include <chrono>
+#include <mutex>
+#include <thread>
 
-using namespace std;
+struct CriticalData{
+  std::mutex mut;
+};
 
-int main() 
-{
-    cout << "Hello, World!";
-    return 0;
+void deadLock(CriticalData& a, CriticalData& b){
+
+  std::lock_guard<std::mutex>guard1(a.mut);           // (2)        
+  std::cout << "Thread: " << std::this_thread::get_id() <<  std::endl;
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(1));
+ 
+  std::lock_guard<std::mutex>guard2(b.mut);          // (2)
+  std::cout << "Thread: " << std::this_thread::get_id() <<  std::endl;
+  
+  // do something with a and b (critical region)        (3)
 }
-```
 
-# Advanced usage
+int main(){
 
-If you want a more complex example (external libraries, viewers...), use the [Advanced C++ template](https://tech.io/select-repo/598)
+  std::cout << std::endl;
+
+  CriticalData c1;
+  CriticalData c2;
+
+  std::thread t1([&]{deadLock(c1, c2);});            // (1)
+  std::thread t2([&]{deadLock(c2, c1);});            // (1)
+
+  t1.join();
+  t2.join();
+
+  std::cout << std::endl;
+
+}
