@@ -1,4 +1,4 @@
-title: Simple C++ Template
+title: Use std::lock() or std::scoped_lock to acquire multiple mutexes
 plan:
 - title: C++ Snippet
   statement: statement.md
